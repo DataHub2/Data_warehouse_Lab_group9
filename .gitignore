@@ -1,4 +1,4 @@
-# ===== Hemligheter (får ALDRIG pushas) =====
+# 
 .env
 *.p8
 *.pem
@@ -7,25 +7,24 @@ rsa_key*
 .streamlit/secrets.toml
 **/.dlt/secrets.toml
 
-# ===== Python / uv =====
+
 .venv/
 __pycache__/
 *.py[cod]
 
-# ===== dbt =====
+#
 .user.yml
 target/
 dbt_packages/
 logs/
 
-# ===== Dagster =====
+
 .tmp*/
 dagster_home/
 
-# ===== Jupyter =====
+
 .ipynb_checkpoints/
 
-# ===== Editor / OS =====
 .vscode/
 .idea/
 .DS_Store
