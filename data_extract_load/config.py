@@ -86,7 +86,7 @@ WIKIPEDIA_SOURCES = {
 # dlt pipeline
 
 PIPELINE_NAME = "flight_punctuality"
-STAGING_DATASET = "staging"
+STAGING_DATASET = "raw"
 
 # The default destination is filesystem
 DEFAULT_DESTINATION = os.getenv("DLT_DESTINATION", "filesystem")
