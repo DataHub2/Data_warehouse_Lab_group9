@@ -54,3 +54,46 @@ def build_pipeline(destination=DEFAULT_DESTINATION):
 def run(source_names=None, destination=DEFAULT_DESTINATION):
     """Load one or more sources + return the load info for each and every one."""
     source_names = source_names or list(SOURCES)
+    pipeline = build_pipeline(destination)
+
+    results = {}
+    for name in source_names:
+        if name not in SOURCES:
+            raise ValueError(f"Unknown source {name!r}. Choose from {sorted(SOURCES)}.")
+
+        # Updated, by way of LLM.
+        # Filesystem destination defaults to a gzipped jsonl. 
+        # Parquet keeps column types that dlt inferred 
+        # and will be readable with pandas directly, 
+        # which is the point of a local landing zone.
+        load_info = pipeline.run(
+            SOURCES[name](),
+            loader_file_format="parquet" if destination == "filesystem" else None,
+        )
+        results[name] = load_info
+        print(f"\n--- {name} ---")
+        print(load_info)
+
+    return results
+
+
+def _parse_args():
+    parser = argparse.ArgumentParser(description="Load flight punctuality source data.")
+    parser.add_argument(
+        "--source",
+        action="append",
+        dest="sources",
+        choices=sorted(SOURCES),
+        help="Load only this source. Repeatable. Defaults to all.",
+    )
+    parser.add_argument(
+        "--destination",
+        default=DEFAULT_DESTINATION,
+        help=f"dlt destination. Defaults to {DEFAULT_DESTINATION!r}.",
+    )
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = _parse_args()
+    run(source_names=args.sources, destination=args.destination)
