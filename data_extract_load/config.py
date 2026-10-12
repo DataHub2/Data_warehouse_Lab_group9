@@ -82,3 +82,14 @@ WIKIPEDIA_SOURCES = {
     "airport_info": "https://en.wikipedia.org/wiki/List_of_international_airports_by_country",
 }
 
+
+# dlt pipeline
+
+PIPELINE_NAME = "flight_punctuality"
+STAGING_DATASET = "staging"
+
+# The default destination is filesystem
+DEFAULT_DESTINATION = os.getenv("DLT_DESTINATION", "filesystem")
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+LOCAL_PARQUET_PATH = os.getenv("DLT_LOCAL_PATH") or (REPO_ROOT / "_local_data").as_uri()
