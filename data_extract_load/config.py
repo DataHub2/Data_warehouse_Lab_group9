@@ -56,3 +56,29 @@ def extraction_dates(reference_date=None, lookback_days=LOOKBACK_DAYS):
     reference_date = reference_date or date.today()
     offsets = range(lookback_days - 1, -1, -1)
     return [reference_date - timedelta(days=offset) for offset in offsets]
+
+
+def format_api_date(value):
+    """Format: Date for the FlightInfo URL path."""
+    return value.strftime(SWEDAVIA_DATE_FORMAT)
+
+
+def swedavia_api_key():
+    """Read the subscription key, rather it fail than sending back None."""
+    api_key = os.getenv("SWEDAVIA_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "SWEDAVIA_API_KEY -> add it to .env locally,"
+            "or, container environment (Azure)."
+        )
+    return api_key
+
+
+# Wikipedia
+
+# Reference data:
+WIKIPEDIA_SOURCES = {
+    "airline_codes": "https://en.wikipedia.org/wiki/List_of_airline_codes",
+    "airport_info": "https://en.wikipedia.org/wiki/List_of_international_airports_by_country",
+}
+
