@@ -32,6 +32,13 @@ GRANT CREATE TABLE ON SCHEMA flights_db.staging TO ROLE staging_rw;
 
 GRANT CREATE VIEW ON SCHEMA flights_db.staging TO ROLE staging_rw;
 
+
+-- warehouse_rw: dbt builds dimensions and facts in WAREHOUSE
+GRANT USAGE ON DATABASE flights_db TO ROLE warehouse_rw;
+GRANT USAGE ON SCHEMA flights_db.warehouse TO ROLE warehouse_rw;
+GRANT CREATE TABLE ON SCHEMA flights_db.warehouse TO ROLE warehouse_rw;
+GRANT CREATE VIEW ON SCHEMA flights_db.warehouse TO ROLE warehouse_rw;
+
 -- marts_rw: dbt builds MARTS
 GRANT USAGE ON DATABASE flights_db TO ROLE marts_rw;
 
@@ -58,7 +65,7 @@ GRANT SELECT ON FUTURE VIEWS IN SCHEMA flights_db.marts TO ROLE marts_r;
 GRANT ROLE wh_usage TO ROLE dlt_loader;
 GRANT ROLE raw_rw TO ROLE dlt_loader;
 
--- dbt_transformer: reads RAW, builds STAGING and MARTS
+-- dbt_transformer: reads RAW, builds STAGING, WAREHOUSE and MARTS
 GRANT ROLE wh_usage TO ROLE dbt_transformer;
 GRANT ROLE raw_r TO ROLE dbt_transformer;
 
