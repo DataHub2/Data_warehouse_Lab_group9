@@ -9,6 +9,9 @@ rsa_key*
 
 _local_data/
 
+# scripts
+swedavia_api_sample.json
+
 .venv/
 __pycache__/
 *.py[cod]

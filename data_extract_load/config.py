@@ -7,13 +7,21 @@ import os
 from datetime import date, timedelta
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+# Load .env here.
+# Run not depending on the working directory now.
+
+load_dotenv(REPO_ROOT / ".env")
 # Swedavia API
 
 SWEDAVIA_BASE_URL = "https://api.swedavia.se/flightinfo/v2"
 
-# NOT yet verified against the live API.
-# REFERENCE. For now, we assume that the API uses the same date format as the Swedavia website.
-# Run scripts/swedavia... to find the format.
+# VERIFIED against the live API. 
+# This format now answers 200, the alternatives
+# Docs hint at all answer 400 "The request is invalid.".
 SWEDAVIA_DATE_FORMAT = "%Y-%m-%d"
 
 # Two FlightInfo endpoints. 
@@ -91,5 +99,4 @@ RAW_DATASET = "raw"
 # The default destination is filesystem
 DEFAULT_DESTINATION = os.getenv("DLT_DESTINATION", "filesystem")
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
 LOCAL_PARQUET_PATH = os.getenv("DLT_LOCAL_PATH") or (REPO_ROOT / "_local_data").as_uri()
