@@ -47,8 +47,11 @@ def _fetch_flights(endpoint, airport, api_date, api_key):
     Returns a list of flight records, or an empty list if the endpoint returns 404.
     """
     url = f"{SWEDAVIA_BASE_URL}/{airport}/{endpoint}/{format_api_date(api_date)}"
-    headers = {"Ocp-Apim-Subscription-Key": api_key}
-
+    # Accept is REQUIRED, tip from course repo: without it the API answers 400, not 406.
+    headers = {
+        "Ocp-Apim-Subscription-Key": api_key,
+        "Accept": "application/json",
+    }
     last_error = None
     for attempt in range(1, REQUEST_MAX_RETRIES + 1):
         try:
