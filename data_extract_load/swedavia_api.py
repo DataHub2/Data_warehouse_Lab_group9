@@ -6,6 +6,7 @@
 ## Records will land close to raw and left for dbt to clean.
 
 import hashlib
+import json
 import time
 
 import dlt
@@ -76,20 +77,30 @@ def _fetch_flights(endpoint, airport, api_date, api_key):
 
 
 def _load_key(flight, endpoint, airport, api_date):
-    """Deterministic key for merge loading.
+    """Deterministic merge key, hashed from the API's own flightLegIdentifier.
 
-    Built from airport, endpoint, date, flightId and scheduledUtc. Now, IF the
-    API's own flightLegIdentifier turns out to be unique, then use that instead.
+    Check script found it distinct for all 343 flights in a response, so it
+    identifies a flight leg on its own. Nested object, so it is hashed into 
+    one scalar column, e.g. instead of spread across seven key columns.
     """
-    times = _get(flight, "departureTime", "arrivalTime") or {}
-    parts = (
-        airport,
-        endpoint,
-        format_api_date(api_date),
-        str(_get(flight, "flightId") or ""),
-        str(_get(times, "scheduledUtc") or ""),
-    )
-    return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
+    identifier = _get(flight, "flightLegIdentifier")
+
+    if identifier is not None:
+        payload = json.dumps(identifier, sort_keys=True)
+    else:
+        # Fallback if, when a record arrives without it.
+        times = _get(flight, "departureTime", "arrivalTime") or {}
+        payload = "|".join(
+            (
+                airport,
+                endpoint,
+                format_api_date(api_date),
+                str(_get(flight, "flightId") or ""),
+                str(_get(times, "scheduledUtc") or ""),
+            )
+        )
+
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 # Resources

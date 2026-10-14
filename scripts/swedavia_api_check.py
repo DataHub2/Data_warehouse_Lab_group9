@@ -1,6 +1,15 @@
 # Swedavia API Check Script
 
+## Answers config.py and swedavia_api.py questions about the Swedavia FlightInfo API v2,
+## E.g. which date format the endpoint expects,
+## real field names,
+## whether actualUtc is populated for the past flights,
+## and whether flightLegIdentifier can serve as the merge key.
 
+# Usage: 
+## uv run python scripts/swedavia_api_check.py
+
+## SWEDAVIA_API_KEY in .env or environment variable is required.
 
 import json
 import os
