@@ -18,6 +18,8 @@ GRANT CREATE SCHEMA ON DATABASE flights_db TO ROLE raw_rw;
 GRANT USAGE ON SCHEMA flights_db.raw TO ROLE raw_rw;
 GRANT CREATE TABLE ON SCHEMA flights_db.raw TO ROLE raw_rw;
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA flights_db.raw TO ROLE raw_rw;
+GRANT SELECT, INSERT, UPDATE, DELETE ON FUTURE TABLES IN SCHEMA flights_db.raw TO ROLE raw_rw;
 -- raw_r: dbt reads RAW
 GRANT USAGE ON DATABASE flights_db TO ROLE raw_r;
 GRANT USAGE ON SCHEMA flights_db.raw TO ROLE raw_r;
@@ -73,6 +75,7 @@ GRANT ROLE staging_rw TO ROLE dbt_transformer;
 
 GRANT ROLE marts_rw TO ROLE dbt_transformer;
 
+GRANT ROLE warehouse_rw TO ROLE dbt_transformer;
 -- streamlit_reporter: reads MARTS
 GRANT ROLE wh_usage TO ROLE streamlit_reporter;
 GRANT ROLE marts_r TO ROLE streamlit_reporter;
