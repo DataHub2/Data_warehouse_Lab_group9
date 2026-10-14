@@ -11,9 +11,9 @@ from pathlib import Path
 
 SWEDAVIA_BASE_URL = "https://api.swedavia.se/flightinfo/v2"
 
-# NOT yet verified against the live API.
-# REFERENCE. For now, we assume that the API uses the same date format as the Swedavia website.
-# Run scripts/swedavia... to find the format.
+# VERIFIED against the live API. 
+# This format now answers 200, the alternatives
+# Docs hint at all answer 400 "The request is invalid.".
 SWEDAVIA_DATE_FORMAT = "%Y-%m-%d"
 
 # Two FlightInfo endpoints. 
