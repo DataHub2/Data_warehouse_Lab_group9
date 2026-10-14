@@ -36,3 +36,6 @@ CREATE ROLE IF NOT EXISTS marts_rw
 
 CREATE ROLE IF NOT EXISTS marts_r
     COMMENT = 'Access role. Read in MARTS, used by streamlit_reporter';
+
+CREATE ROLE IF NOT EXISTS warehouse_rw
+    COMMENT = 'Access role. Read and write in WAREHOUSE, used by dbt_transformer';
