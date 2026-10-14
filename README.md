@@ -1,119 +1,98 @@
-# Flight Punctuality Analytics – Group 9
+# Flight Punctuality Analytics
 
-Proof of concept of a modern data stack for a Swedish airport authority.
-The pipeline collects arrivals and departures from all Swedavia airports and
-enriches them with airline and airport reference data, so that business
-stakeholders can analyse **delayed arrivals and departures by airline, airport
-and date**.
+This is our group project in the Data Warehouse course. We build a data
+pipeline that collects flight data from Swedish airports and shows how many
+arrivals and departures are delayed. You can look at the delays by airline,
+by airport and by date.
 
-## Architecture
-
-```
-Swedavia FlightInfo API ──┐
-Wikipedia: airlines ──────┼── dlt ──▶ RAW ── dbt ──▶ STAGING ──▶ WAREHOUSE ──▶ MARTS ──▶ Streamlit
-Wikipedia: airports ──────┘
-                 └──────────── orchestrated by Dagster ────────────┘
-```
-
-| Layer          | Tool      | Snowflake schema   |
-| -------------- | --------- | ------------------ |
-| Extract & load | dlt       | `flights_db.raw`   |
-| Transform      | dbt       | `flights_db.staging` → `flights_db.warehouse` (dimensions and facts) → `flights_db.marts` |
-| Serve          | Streamlit | reads `flights_db.marts` |
-| Orchestrate    | Dagster   | –                  |
-
-## Repository structure
+## How the pipeline works
 
 ```
-.
-├── data_extract_load/        # dlt: Swedavia and Wikipedia sources + pipeline
-│   ├── config.py             # shared settings (airports, dates, URLs)
-│   ├── pipeline.py           # entry point for extract and load
-│   ├── swedavia_api.py       # Swedavia FlightInfo source (arrivals, departures)
-│   └── wikipedia_source.py   # Wikipedia source (airline codes, airports)
-├── snowflake_setup/          # Snowflake worksheets, run in numbered order
-├── scripts/                  # helper scripts
-├── pyproject.toml / uv.lock  # Python dependencies (uv)
-└── README.md
+Swedavia API + Wikipedia -> dlt -> Snowflake -> dbt -> Streamlit
 ```
 
-## Prerequisites
+1. dlt gets flights from the Swedavia API and airline/airport data from
+   Wikipedia, and loads it into Snowflake.
+2. dbt cleans the data and builds the tables we use for analysis.
+3. Streamlit shows a dashboard with the results.
+4. Dagster runs everything automatically.
 
-- Python 3.12 and [uv](https://github.com/astral-sh/uv)
+In Snowflake we use one database, `flights_db`, with four schemas:
+
+- `raw` - the data exactly as dlt loads it
+- `staging` - cleaned data
+- `warehouse` - our dimension and fact tables
+- `marts` - the tables the dashboard uses
+
+## Folders
+
+```
+data_extract_load/    dlt code (Swedavia and Wikipedia)
+data_transformation/  dbt project
+snowflake_setup/      SQL files to set up Snowflake
+scripts/              small helper scripts
+```
+
+## What you need
+
+- Python 3.12
+- uv
 - Git
 - VS Code with the Snowflake extension
-- Access to the group's Snowflake trial account (ask the account owner)
-- A Swedavia API subscription key from [apideveloper.swedavia.se](https://apideveloper.swedavia.se/)
+- A user in our Snowflake account (ask Zakaria)
+- A Swedavia API key from https://apideveloper.swedavia.se/
 
-## Getting started
+## Get started
+
+Clone the repo and install the packages:
 
 ```bash
 git clone https://github.com/DataHub2/Data_warehouse_Lab_group9.git
+```
+
+```bash
 cd Data_warehouse_Lab_group9
+```
+
+```bash
 uv sync
 ```
 
-`uv sync` creates `.venv` and installs the exact package versions from `uv.lock`.
+## Snowflake
 
-## Snowflake setup
+We all work in the same Snowflake account. Everything in Snowflake is created
+by the SQL files in `snowflake_setup/`. Run them in this order:
 
-The whole group develops in **one shared Snowflake trial account**. Everything
-that exists in Snowflake is created by the worksheets in `snowflake_setup/`,
-so the account can be rebuilt from this repository.
+1. `01_warehouse.sql` - creates the warehouse `flights_wh`
+2. `02_database_schemas.sql` - creates `flights_db` and the four schemas
+3. `03_roles.sql` - creates the roles
+4. `04_grants.sql` - gives the roles their access
+5. `05_users.sql` - creates the users
 
-### Run order
+Each file starts with the right role, for example `USE ROLE SYSADMIN;`.
 
-Run each file in Snowflake (VS Code extension or Snowsight), in this order:
+### Roles
 
-| Order | File                       | Run as         | Creates                                  |
-| ----- | -------------------------- | -------------- | ---------------------------------------- |
-| 1     | `01_warehouse.sql`         | SYSADMIN       | warehouse `flights_wh`                   |
-| 2     | `02_database_schemas.sql`  | SYSADMIN       | database `flights_db` with `raw`, `staging`, `warehouse`, `marts` |
-| 3     | `03_roles.sql`             | USERADMIN      | functional and access roles              |
-| 4     | `04_grants.sql`            | SECURITYADMIN  | privileges and role hierarchy            |
-| 5     | `05_users.sql`             | USERADMIN / SECURITYADMIN | personal users and service users |
+Every tool gets its own role, so it can only do what it needs:
 
-Each file switches to the correct role itself.
-
-### Access control
-
-Roles follow the principle of least privilege. **Access roles** hold the
-privileges on a schema; **functional roles** combine access roles and are
-granted to users.
-
-| Functional role      | Used by              | Can                                        |
-| -------------------- | -------------------- | ------------------------------------------ |
-| `dlt_loader`         | `dlt_user`           | write to `raw` (and create dlt's `raw_staging`) |
-| `dbt_transformer`    | `dbt_user`           | read `raw`, build `staging`, `warehouse` and `marts` |
-| `streamlit_reporter` | `streamlit_user`     | read `marts`                               |
-| `developer`          | team members         | everything the three tool roles can do     |
-
-All custom roles roll up to `SYSADMIN`.
+- `dlt_loader` can write to `raw`
+- `dbt_transformer` can read `raw` and write to `staging`, `warehouse` and `marts`
+- `streamlit_reporter` can only read `marts`
+- `developer` is for us in the group and has all three roles above
 
 ### Users
 
-| User             | Type    | Login        | Role                 |
-| ---------------- | ------- | ------------ | -------------------- |
-| team members     | PERSON  | password + MFA | `developer`        |
-| `dlt_user`       | SERVICE | key pair     | `dlt_loader`         |
-| `dbt_user`       | SERVICE | key pair     | `dbt_transformer`    |
-| `streamlit_user` | SERVICE | key pair     | `streamlit_reporter` |
+- Each of us has our own user with a password. We use the role `developer`.
+- dlt, dbt and Streamlit have their own users: `dlt_user`, `dbt_user` and
+  `streamlit_user`. They log in with a key file instead of a password.
 
-Programs log in as service users with key pairs instead of passwords.
-Snowflake does not allow password login for `TYPE = SERVICE` users.
+We never put passwords or keys in the repo. Passwords and public keys are set
+directly in Snowflake.
 
-**Secrets are never stored in this repository.** Passwords and public keys
-are set in an unsaved worksheet:
+### Key files
 
-```sql
-USE ROLE USERADMIN;
-ALTER USER <user> SET PASSWORD = '<temporary_password>' MUST_CHANGE_PASSWORD = TRUE;
-ALTER USER <service_user> SET RSA_PUBLIC_KEY = '<public key without header/footer>';
-```
-
-### Key pairs for service users
-
-Generate one key pair per tool, outside the repository:
+The key files are made with this command. You only need it if you set up a new
+Snowflake account. Otherwise you get the key files from Zakaria.
 
 ```bash
 mkdir -p ~/.ssh/snowflake
@@ -123,70 +102,98 @@ mkdir -p ~/.ssh/snowflake
 for u in dlt dbt streamlit; do openssl genrsa 2048 | openssl pkcs8 -topk8 -inform PEM -nocrypt -out ~/.ssh/snowflake/${u}_key.p8 && openssl rsa -in ~/.ssh/snowflake/${u}_key.p8 -pubout -out ~/.ssh/snowflake/${u}_key.pub; done
 ```
 
-- `*_key.pub` (public key) is set on the service user in Snowflake.
-- `*_key.p8` (private key) stays in `~/.ssh/snowflake/` on every machine that
-  runs the pipeline. It is shared privately within the group and is ignored
-  by git.
+Save the three `.p8` files in `~/.ssh/snowflake/` on your computer. Never add
+them to git.
 
-## Extract and load (dlt)
+## dlt
 
-`pipeline.py` loads both sources into the `raw` dataset. By default it writes
-local parquet files to `_local_data/` (ignored by git) so the code can be
-tested without Snowflake.
+dlt loads the data into the `raw` schema. Put your Swedavia key in a `.env`
+file in the repo folder:
+
+```
+SWEDAVIA_API_KEY=your_key_here
+```
+
+Run the pipeline and save the data locally (good for testing):
 
 ```bash
 uv run --env-file .env python data_extract_load/pipeline.py
 ```
 
-```bash
-uv run --env-file .env python data_extract_load/pipeline.py --source wikipedia
-```
+Run it and load the data into Snowflake:
 
 ```bash
 uv run --env-file .env python data_extract_load/pipeline.py --destination snowflake
 ```
 
-The Swedavia source reads `SWEDAVIA_API_KEY` from the environment, so `.env`
-must contain:
+The API only has data for the last three days, so we run the pipeline every
+day to collect more history.
 
-```
-SWEDAVIA_API_KEY=<your key>
+## dbt
+
+The dbt project is in the folder `data_transformation/`.
+
+First, add this to the file `~/.dbt/profiles.yml` on your computer. If the
+file already has something in it, add this at the bottom:
+
+```yaml
+data_transformation:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: <account_identifier>
+      user: dbt_user
+      private_key_path: /Users/<your_user>/.ssh/snowflake/dbt_key.p8
+      role: dbt_transformer
+      warehouse: flights_wh
+      database: flights_db
+      schema: staging
+      threads: 4
 ```
 
-- Flights are loaded with `write_disposition="merge"`, so each run updates
-  existing flights and adds new ones. The API only returns the last three days,
-  so running daily builds up history.
-- Wikipedia reference tables are replaced on every run.
+Change `<account_identifier>` and `<your_user>` to your own values.
+
+Then go into the dbt folder and test the connection:
+
+```bash
+cd data_transformation
+```
+
+```bash
+dbt deps
+```
+
+```bash
+dbt debug
+```
+
+If it says "All checks passed!" it works.
 
 ## Data model
 
-_To be added: dimensional model (dbdiagram) and description of facts and dimensions._
+Coming soon.
 
-## Transformation (dbt)
+## Dagster
 
-_To be added._
+Coming soon.
 
-## Orchestration (Dagster)
+## Dashboard
 
-_To be added._
+Coming soon.
 
-## Dashboard (Streamlit)
+## Docker and Azure
 
-_To be added._
+Coming soon.
 
-## Deployment (Docker and Azure)
+## Things we decided
 
-_To be added._
+- We use the 10 airports that Swedavia has in the API: ARN, BMA, GOT, MMX,
+  LLA, UME, OSD, VBY, RNB and KRN.
+- What counts as a delay: not decided yet.
 
-## Assumptions
-
-- **Airports:** "all available airports in Sweden" is interpreted as the ten
-  airports operated by Swedavia and served by the FlightInfo API:
-  ARN, BMA, GOT, MMX, LLA, UME, OSD, VBY, RNB, KRN.
-- **Delay definition:** _to be decided after data exploration._
-
-## Team
+## Group
 
 - Zakaria Abdullahi
 - Marcus Andersson
-- Nasr Wahi
+- Nasser Wahi
