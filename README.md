@@ -170,6 +170,12 @@ dbt debug
 
 If it says "All checks passed!" it works.
 
+## First load (issues) to a new Snowflake schema
+
+The Wikipedia sources use `write_disposition="replace"`, which issues
+TRUNCATE before the table exists. On a brand new schema the first load
+fails. Set both resources to `"append"` once, run, then switch back.
+
 ## Data model
 
 Coming soon.
