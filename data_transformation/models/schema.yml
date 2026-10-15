@@ -1,0 +1,68 @@
+models:
+  - name: src_arrivals
+    description: Cleaned arrivals from the Swedavia API, one row per flight
+    columns:
+      - name: flight_key
+        data_tests:
+          - unique
+          - not_null
+      - name: airport_iata
+        data_tests:
+          - not_null
+      - name: scheduled_at
+        data_tests:
+          - not_null
+      - name: status_code
+        data_tests:
+          - accepted_values:
+              values: ['LAN', 'DEL', 'SCH', 'CAN']
+              config:
+                severity: warn
+
+  - name: src_departures
+    description: Cleaned departures from the Swedavia API, one row per flight
+    columns:
+      - name: flight_key
+        data_tests:
+          - unique
+          - not_null
+      - name: airport_iata
+        data_tests:
+          - not_null
+      - name: scheduled_at
+        data_tests:
+          - not_null
+      - name: status_code
+        data_tests:
+          - accepted_values:
+              values: ['ACT', 'DEL', 'SCH', 'CAN', 'SEQ']
+              config:
+                severity: warn
+
+
+
+
+
+  - name: fct_flights
+    description: One row per arrival or departure at a Swedavia airport, deleted flights removed
+    columns:
+      - name: flight_key
+        data_tests:
+          - unique
+          - not_null
+      - name: airline_code
+        data_tests:
+          - not_null
+      - name: airport_iata
+        data_tests:
+          - not_null
+      - name: other_airport_iata
+        data_tests:
+          - not_null
+      - name: date_key
+        data_tests:
+          - not_null
+      - name: direction
+        data_tests:
+          - accepted_values:
+              values: ['arrival', 'departure']
