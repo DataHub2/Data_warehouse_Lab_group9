@@ -5,6 +5,10 @@
 ## and loads into the configured destination
 ## (which fow now is, local parquet, Snowflake once the account is ready).
 
+## Dagster imports source functions directly instead of calling this file,
+## the scheduled runs will go through orchestration/definitions.py.
+## Same sources, no duplicates. Extraction logic.
+
 ## Terminal. Run:
 ##   uv run python data_extract_load/pipeline.py
 ##   uv run python data_extract_load/pipeline.py --source wikipedia
