@@ -1,0 +1,14 @@
+sources:
+  - name: raw
+    database: flights_db
+    schema: raw
+    description: Raw data loaded by dlt from the Swedavia API and Wikipedia
+    tables:
+      - name: arrivals
+        description: Arrivals at Swedavia airports, one row per flight
+      - name: departures
+        description: Departures from Swedavia airports, one row per flight
+      - name: airline_codes
+        description: Airline codes and names from Wikipedia
+      - name: airport_info
+        description: International airports by country from Wikipedia
