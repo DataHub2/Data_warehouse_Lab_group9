@@ -1,3 +1,16 @@
+-- Cleaned arrivals from the Swedavia API, one row per flight.
+-- flight_key (_load_key) is unique for every row.
+--
+-- Status codes: LAN (landed), DEL (deleted), SCH (scheduled), CAN (cancelled).
+-- The English status text includes a time ("Landed 18:34"), so we use the code.
+-- Only LAN flights have actual_at. DEL flights were removed from the schedule
+-- and will be filtered out in fct_flights.
+
+
+
+
+
+
 with arrivals as (
     select * from {{ source('raw', 'arrivals') }}
 )
