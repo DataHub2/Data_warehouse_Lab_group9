@@ -1,0 +1,40 @@
+Table fct_flights {
+  flight_key varchar [PK]
+  airline_code varchar [not null, ref: > dim_airline.airline_code] // key to dim_airline, IATA code when it exists, otherwise ICAO
+  airport_iata varchar [not null, ref: > dim_airport.airport_iata] // key to dim_airport, the Swedavia airport
+  other_airport_iata varchar [not null, ref: > dim_airport.airport_iata] // key to dim_airport, origin or destination at the other end
+  date_key date [not null, ref: > dim_date.date_key] // key to dim_date, from scheduled time in UTC
+  direction varchar
+  flight_number varchar
+  status varchar
+  traffic_type varchar
+  scheduled_at timestamp
+  actual_at timestamp
+  delay_minutes int
+  is_delayed bool
+  is_cancelled bool
+}
+
+Table dim_date{
+  date_key date [pk] 
+  day_of_week int
+  day_name varchar
+  is_weekend bool
+  week_number int
+  month int
+  year int 
+}
+Table dim_airport{
+  airport_iata varchar [pk]
+  airport_name varchar // from Swedavia, always present
+  city varchar // from Wikipedia, may be null when no match
+  is_swedavia_airport bool
+}
+
+Table dim_airline{
+  airline_code varchar [pk] //  IATA code when it exists, otherwise ICAO, as given by Swedavia
+  airline_icao varchar // alternative code, useful when matching Wikepedia
+  airline_name varchar // from Swedavia, always present
+  country varchar // from Wikipedia, null for the one airline with no match
+}
+
