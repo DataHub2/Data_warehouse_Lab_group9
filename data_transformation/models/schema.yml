@@ -1,0 +1,137 @@
+models:
+  - name: src_arrivals
+    description: Cleaned arrivals from the Swedavia API, one row per flight
+    columns:
+      - name: flight_key
+        data_tests:
+          - unique
+          - not_null
+      - name: airport_iata
+        data_tests:
+          - not_null
+      - name: scheduled_at
+        data_tests:
+          - not_null
+      - name: status_code
+        data_tests:
+          - accepted_values:
+              values: ['LAN', 'DEL', 'SCH', 'CAN']
+              config:
+                severity: warn
+
+  - name: src_departures
+    description: Cleaned departures from the Swedavia API, one row per flight
+    columns:
+      - name: flight_key
+        data_tests:
+          - unique
+          - not_null
+      - name: airport_iata
+        data_tests:
+          - not_null
+      - name: scheduled_at
+        data_tests:
+          - not_null
+      - name: status_code
+        data_tests:
+          - accepted_values:
+              values: ['ACT', 'DEL', 'SCH', 'CAN', 'SEQ']
+              config:
+                severity: warn
+
+
+
+
+
+  - name: fct_flights
+    description: One row per arrival or departure at a Swedavia airport, deleted flights removed
+    columns:
+      - name: flight_key
+        data_tests:
+          - unique
+          - not_null
+      - name: airline_code   # Note that LLM helped me here
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_airline')
+              field: airline_code
+      - name: airport_iata
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_airport')
+              field: airport_iata
+      - name: other_airport_iata
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_airport')
+              field: airport_iata
+
+      - name: date_key   # Note that LLM helped me here
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+      - name: direction
+        data_tests:
+          - accepted_values:
+              values: ['arrival', 'departure']
+
+
+
+
+
+  - name: dim_date
+    description: One row per date in fct_flights
+    columns:
+      - name: date_key
+        data_tests:
+          - unique
+          - not_null
+
+          
+
+  - name: dim_airline
+    description: One row per airline in the Swedavia data, country from Wikipedia (ICAO match)
+    columns:
+      - name: airline_code
+        data_tests:
+          - unique
+          - not_null
+      - name: airline_name
+        data_tests:
+          - not_null
+
+
+
+
+
+  - name: dim_airport
+    description: One row per airport in the Swedavia data, city from Wikipedia or Swedavia
+    columns:
+      - name: airport_iata
+        data_tests:
+          - unique
+          - not_null
+      - name: airport_name
+        data_tests:
+          - not_null
+
+
+
+  - name: mart_flight_delays
+    description: One row per arrival or departure with airline, airport and date names, for the dashboard
+    columns:
+      - name: flight_key
+        data_tests:
+          - unique
+          - not_null
+      - name: airline_name
+        data_tests:
+          - not_null
+      - name: airport_name
+        data_tests:
+          - not_null

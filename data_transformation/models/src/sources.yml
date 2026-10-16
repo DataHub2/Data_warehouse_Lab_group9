@@ -1,0 +1,26 @@
+sources:
+  - name: raw
+    database: flights_db
+    schema: raw
+    description: Raw data loaded by dlt from the Swedavia API and Wikipedia
+    tables:
+      - name: arrivals
+        description: Arrivals at Swedavia airports, one row per flight
+        meta:
+          dagster:
+            asset_key: ['dlt_swedavia_arrivals']
+      - name: departures
+        description: Departures from Swedavia airports, one row per flight
+        meta:
+          dagster:
+            asset_key: ['dlt_swedavia_departures']
+      - name: airline_codes
+        description: Airline codes and names from Wikipedia
+        meta:
+          dagster:
+            asset_key: ['dlt_wikipedia_airline_codes']
+      - name: airport_info
+        description: International airports by country from Wikipedia
+        meta:
+          dagster:
+            asset_key: ['dlt_wikipedia_airport_info']
