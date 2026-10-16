@@ -114,16 +114,28 @@ schedule_wikipedia = dg.ScheduleDefinition(
 )
 
 
+# Sensors
+
+## When the Swedavia load has finished, run all dbt models.
+## The asset key is the one Dagster gives the dlt resource, and it matches
+## meta.dagster.asset_key in data_transformation/models/src/sources.yml.
+## default_status=RUNNING turns the sensor on automatically, so it also works
+## in a container where nobody turns it on in the UI.
+@dg.asset_sensor(
+    asset_key=dg.AssetKey("dlt_swedavia_arrivals"),
+    job_name="job_dbt",
+    default_status=dg.DefaultSensorStatus.RUNNING,
+)
+def swedavia_loaded_sensor(context, asset_event):
+    yield dg.RunRequest(run_key=context.cursor)
+
+
 # Definitions
 
-## Note. TODO: Once the dbt models exist, it is important to link them 
-## to the dlt load with an asset sensor, 
-## so that a finished load triggers the transformation. 
-## That needs the asset key Dagster gives the dlt resource, and is visible in the UI. 
-## The matching dagster.asset_key under meta in the dbt sources.yml.
 defs = dg.Definitions(
     assets=[swedavia_load, wikipedia_load, dbt_models],
     resources={"dlt": dlt_resource, "dbt": dbt_resource},
     jobs=[job_swedavia, job_wikipedia, job_dbt],
     schedules=[schedule_swedavia, schedule_wikipedia],
+    sensors=[swedavia_loaded_sensor],
 )
