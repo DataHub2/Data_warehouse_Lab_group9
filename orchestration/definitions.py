@@ -18,7 +18,7 @@ import dlt
 from dagster_dbt import DbtCliResource, DbtProject, dbt_assets
 from dagster_dlt import DagsterDltResource, dlt_assets
 
-REPO_ROOT = Path(__file__).resolve().parent[1]
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # Add the data_extract_load folder to the Python path, 
 # so that we can import from it.
