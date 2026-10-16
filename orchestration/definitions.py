@@ -1,12 +1,14 @@
 # Dagster definitions.py
 
-## Orchestration
+## Orchestration: dlt loads into RAW, then dbt builds the rest.
 
-## Run locally:
-##   uv run
-
+## Terminal. Run locally:
+##   uv run dagster dev -f orchestration/definitions.py
 
 ## Dagster imports the dlt sources directly instead of pipeline.py.
+## pipeline.py stays for the manual entry points (local runs), 
+## and for testing the sources in isolation.
+## Same source functions, no duplicates. Extraction logic.
 
 import sys
 from pathlib import Path
@@ -79,3 +81,37 @@ def dbt_models(context: dg.AssetExecutionContext, dbt: DbtCliResource):
 
 
 # Dagster job
+
+job_swedavia = dg.define_asset_job(
+    "job_swedavia", selection=dg.AssetSelection.assets(swedavia_load)
+)
+job_wikipedia = dg.define_asset_job(
+    "job_wikipedia", selection=dg.AssetSelection.assets(wikipedia_load)
+)
+job_dbt = dg.define_asset_job("job_dbt", selection=dg.AssetSelection.assets(dbt_models))
+
+
+# Schedules
+
+schedule_swedavia = dg.ScheduleDefinition(
+    job=job_swedavia,
+    cron_schedule="30 4 * * *",
+)
+
+# Reference....
+schedule_wikipedia = dg.ScheduleDefinition(
+    job=job_wikipedia,
+    cron_schedule="40 3 * * 1",
+)
+
+
+# Definitions
+
+## Note to self: dbt models...
+
+defs = dg.Definitions(
+    assets=[swedavia_load, wikipedia_load, dbt_models],
+    resources={"dlt": dlt_resource, "dbt": dbt_resource},
+    jobs=[job_swedavia, job_wikipedia, job_dbt],
+    schedules=[schedule_swedavia, schedule_wikipedia],
+)
