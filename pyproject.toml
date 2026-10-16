@@ -19,3 +19,5 @@ dependencies = [
     "streamlit>=1.65.0",
 ]
 
+[tool.pyright]
+extraPaths = ["data_extract_load"]
