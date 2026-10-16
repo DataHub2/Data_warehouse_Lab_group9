@@ -50,19 +50,88 @@ models:
         data_tests:
           - unique
           - not_null
-      - name: airline_code
+      - name: airline_code   # Note that LLM helped me here
         data_tests:
           - not_null
+          - relationships:
+              to: ref('dim_airline')
+              field: airline_code
       - name: airport_iata
         data_tests:
           - not_null
+          - relationships:
+              to: ref('dim_airport')
+              field: airport_iata
       - name: other_airport_iata
         data_tests:
           - not_null
-      - name: date_key
+          - relationships:
+              to: ref('dim_airport')
+              field: airport_iata
+
+      - name: date_key   # Note that LLM helped me here
         data_tests:
           - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
       - name: direction
         data_tests:
           - accepted_values:
               values: ['arrival', 'departure']
+
+
+
+
+
+  - name: dim_date
+    description: One row per date in fct_flights
+    columns:
+      - name: date_key
+        data_tests:
+          - unique
+          - not_null
+
+          
+
+  - name: dim_airline
+    description: One row per airline in the Swedavia data, country from Wikipedia (ICAO match)
+    columns:
+      - name: airline_code
+        data_tests:
+          - unique
+          - not_null
+      - name: airline_name
+        data_tests:
+          - not_null
+
+
+
+
+
+  - name: dim_airport
+    description: One row per airport in the Swedavia data, city from Wikipedia or Swedavia
+    columns:
+      - name: airport_iata
+        data_tests:
+          - unique
+          - not_null
+      - name: airport_name
+        data_tests:
+          - not_null
+
+
+
+  - name: mart_flight_delays
+    description: One row per arrival or departure with airline, airport and date names, for the dashboard
+    columns:
+      - name: flight_key
+        data_tests:
+          - unique
+          - not_null
+      - name: airline_name
+        data_tests:
+          - not_null
+      - name: airport_name
+        data_tests:
+          - not_null
