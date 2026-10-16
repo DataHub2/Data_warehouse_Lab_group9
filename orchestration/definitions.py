@@ -33,6 +33,7 @@ from wikipedia_source import wikipedia_source
 # Truncating keeps the warehouse free of leftovers, between runs etc.
 dlt.config["load.truncate_staging_dataset"] = True
 
+
 # dlt assets
 
 dlt_resource = DagsterDltResource()
@@ -80,7 +81,7 @@ def dbt_models(context: dg.AssetExecutionContext, dbt: DbtCliResource):
     yield from dbt.cli(["build"], context=context).stream()
 
 
-# Dagster job
+# Jobs & runs
 
 job_swedavia = dg.define_asset_job(
     "job_swedavia", selection=dg.AssetSelection.assets(swedavia_load)
@@ -93,12 +94,20 @@ job_dbt = dg.define_asset_job("job_dbt", selection=dg.AssetSelection.assets(dbt_
 
 # Schedules
 
+## Note: the cron schedule is in UTC, so 4:30 AM UTC is 6:30 AM CEST (Swedish Time).
+## Daily and the time matters since it is a free API,
+## keeps three days and a missed run will not be recoverable. 
+## So, best to run it early in the morning and have complete data for the day.
+
+## Schedule is dependent on if Dagster is up and running,
+## meaning that if the Dagster server is down, the schedule will not run.
+## However, with an Azure container it runs continuously, so that should not be an issue.
 schedule_swedavia = dg.ScheduleDefinition(
     job=job_swedavia,
     cron_schedule="30 4 * * *",
 )
 
-# Reference....
+# Reference data, weekly is enough here.
 schedule_wikipedia = dg.ScheduleDefinition(
     job=job_wikipedia,
     cron_schedule="40 3 * * 1",
@@ -107,8 +116,11 @@ schedule_wikipedia = dg.ScheduleDefinition(
 
 # Definitions
 
-## Note to self: dbt models...
-
+## Note. TODO: Once the dbt models exist, it is important to link them 
+## to the dlt load with an asset sensor, 
+## so that a finished load triggers the transformation. 
+## That needs the asset key Dagster gives the dlt resource, and is visible in the UI. 
+## The matching dagster.asset_key under meta in the dbt sources.yml.
 defs = dg.Definitions(
     assets=[swedavia_load, wikipedia_load, dbt_models],
     resources={"dlt": dlt_resource, "dbt": dbt_resource},
