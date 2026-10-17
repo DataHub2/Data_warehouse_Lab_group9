@@ -6,10 +6,10 @@ data_transformation:
   outputs:
     dev:
       type: snowflake
-      account: "{{ env_var('SNOWFLAKE_ACCOUNT', 'placeholder') }}"
-      user: "{{ env_var('SNOWFLAKE_USER', 'placeholder') }}"
-      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH', '/dev/null') }}"
-      role: "{{ env_var('SNOWFLAKE_ROLE', 'placeholder') }}"
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      private_key: "{{ env_var('SNOWFLAKE_PRIVATE_KEY') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE') }}"
       warehouse: flights_wh
       database: flights_db
       schema: staging
