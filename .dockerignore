@@ -1,0 +1,14 @@
+# LLM fix: dbt rebuilds these inside the container. Copying the host's versions
+# brings along a stale parse cache that breaks dbt parse.
+
+data_transformation/target
+data_transformation/dbt_packages
+data_transformation/logs
+
+.venv
+__pycache__
+logs
+_local_data
+.git
+.env
+.dlt
