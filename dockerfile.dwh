@@ -3,6 +3,7 @@ FROM python:3.12
 ENV DBT_PROFILES_DIR=/pipeline
 
 WORKDIR /pipeline
+RUN mkdir -p /pipeline/dagster_home
 COPY pyproject.toml uv.lock ./
 
 RUN pip install --no-cache-dir uv
@@ -12,6 +13,7 @@ COPY data_extract_load/ ./data_extract_load/
 COPY data_transformation/ ./data_transformation/
 COPY orchestration/ ./orchestration/
 COPY profiles.yml ./profiles.yml
+COPY dagster_home/ ./dagster_home/
 
 WORKDIR /pipeline/orchestration
 
