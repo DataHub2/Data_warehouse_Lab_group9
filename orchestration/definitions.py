@@ -10,6 +10,7 @@
 ## and for testing the sources in isolation.
 ## Same source functions, no duplicates. Extraction logic.
 
+import os
 import sys
 from pathlib import Path
 
@@ -66,7 +67,7 @@ def wikipedia_load(context: dg.AssetExecutionContext, dlt: DagsterDltResource):
 
 dbt_project = DbtProject(
     project_dir=REPO_ROOT / "data_transformation",
-    profiles_dir=Path.home() / ".dbt",
+    profiles_dir=Path(os.getenv("DBT_PROFILES_DIR", Path.home() / ".dbt")),
 )
 
 # Produces manifest.json.
