@@ -90,8 +90,12 @@ job_swedavia = dg.define_asset_job(
 job_wikipedia = dg.define_asset_job(
     "job_wikipedia", selection=dg.AssetSelection.assets(wikipedia_load)
 )
-job_dbt = dg.define_asset_job("job_dbt", selection=dg.AssetSelection.assets(dbt_models))
-
+job_dbt = dg.define_asset_job(
+    "job_dbt",
+    selection=dg.AssetSelection.assets(dbt_models),
+    # So that the queue can cap dbt at one build at a time instead of running parallel
+    tags={"dbt": "build"},
+)
 
 # Schedules
 
