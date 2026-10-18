@@ -107,15 +107,20 @@ job_dbt = dg.define_asset_job(
 ## Schedule is dependent on if Dagster is up and running,
 ## meaning that if the Dagster server is down, the schedule will not run.
 ## However, with an Azure container it runs continuously, so that should not be an issue.
+## default_status=RUNNING: the container starts with an empty DAGSTER_HOME,
+## so schedules that are off by default would never run in Azure.
+
 schedule_swedavia = dg.ScheduleDefinition(
     job=job_swedavia,
     cron_schedule="30 4 * * *",
+    default_status=dg.DefaultScheduleStatus.RUNNING,
 )
 
 # Reference data, weekly is enough here.
 schedule_wikipedia = dg.ScheduleDefinition(
     job=job_wikipedia,
     cron_schedule="40 3 * * 1",
+    default_status=dg.DefaultScheduleStatus.RUNNING,
 )
 
 
