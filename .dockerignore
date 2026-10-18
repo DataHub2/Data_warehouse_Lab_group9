@@ -12,3 +12,4 @@ _local_data
 .git
 .env
 .dlt
+.streamlit
