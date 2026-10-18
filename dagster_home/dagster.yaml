@@ -1,0 +1,13 @@
+# Queue runs instead of launching them immediately.
+
+run_coordinator:
+  module: dagster.core.run_coordinator
+  class: QueuedRunCoordinator
+  config:
+    tag_concurrency_limits:
+      - key: "dbt"
+        value: "build"
+        limit: 1
+
+telemetry:
+  enabled: false

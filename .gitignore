@@ -24,8 +24,10 @@ logs/
 
 
 .tmp*/
-dagster_home/
-
+# Dagster writes run history and logs into DAGSTER_HOME at runtime.
+# Only the configuration belongs in the repo.
+dagster_home/*
+!dagster_home/dagster.yaml
 
 .ipynb_checkpoints/
 
