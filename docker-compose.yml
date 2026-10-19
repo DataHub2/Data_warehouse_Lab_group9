@@ -11,3 +11,12 @@ services:
       # .env points to DAGSTER_HOME at a path on their own machine.
       # While the container has its own, so it will be overridden here.
       DAGSTER_HOME: /pipeline/dagster_home
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: dockerfile.dashboard
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
