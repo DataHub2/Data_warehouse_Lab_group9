@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: dockerfile.dwh
+    image: flightsacrnasr.azurecr.io/flights-dwh:latest
     ports:
       - "3000:3000"
     env_file:
@@ -16,6 +17,7 @@ services:
     build:
       context: .
       dockerfile: dockerfile.dashboard
+    image: flightsacrnasr.azurecr.io/flights-dashboard:latest
     ports:
       - "8501:8501"
     env_file:
