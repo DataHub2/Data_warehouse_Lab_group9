@@ -29,7 +29,11 @@ In Snowflake we use one database, `flights_db`, with four schemas:
 ```
 data_extract_load/    dlt code (Swedavia and Wikipedia)
 data_transformation/  dbt project
+orchestration/        Dagster code
+dashboard/            Streamlit dashboard
 snowflake_setup/      SQL files to set up Snowflake
+docs/                 our data model
+dagster_home/         Dagster settings
 scripts/              small helper scripts
 ```
 
@@ -41,6 +45,7 @@ scripts/              small helper scripts
 - VS Code with the Snowflake extension
 - A user in our Snowflake account (ask Zakaria)
 - A Swedavia API key from https://apideveloper.swedavia.se/
+- Docker (only for running the containers)
 
 ## Get started
 
@@ -170,6 +175,25 @@ dbt debug
 
 If it says "All checks passed!" it works.
 
+Build all models and run all tests:
+
+```bash
+dbt build
+```
+
+These are our models:
+
+- `src` - cleans the raw tables (`src_arrivals`, `src_departures`,
+  `src_airline_codes`, `src_airport_info`). Saved as views in `staging`.
+- `fct` - `fct_flights`, one row per arrival or departure. Saved in `warehouse`.
+- `dim` - `dim_date`, `dim_airline` and `dim_airport`. Saved in `warehouse`.
+- `mart` - `mart_flight_delays`, one table with everything the dashboard needs.
+  Saved in `marts`.
+
+The tests are in `models/schema.yml`. They check for example that every flight
+has a unique key and that every airline and airport in `fct_flights` exists in
+the dimension tables.
+
 ## First load (issues) to a new Snowflake schema
 
 The Wikipedia sources use `write_disposition="replace"`, which issues
@@ -178,25 +202,92 @@ fails. Set both resources to `"append"` once, run, then switch back.
 
 ## Data model
 
-Coming soon.
+We use a star schema. The diagram is in `docs/data_model.dbml` (open it in
+https://dbdiagram.io).
+
+- `fct_flights` is the fact table. One row is one arrival or one departure at
+  a Swedavia airport. It has the scheduled and actual time, the delay in
+  minutes and if the flight was delayed or cancelled.
+- `dim_airline` - one row per airline. Name from Swedavia, country from
+  Wikipedia.
+- `dim_airport` - one row per airport. We use it twice: for the Swedavia
+  airport and for the airport at the other end of the flight.
+- `dim_date` - one row per date, with weekday and if it is a weekend.
 
 ## Dagster
 
-Coming soon.
+Dagster runs the whole pipeline. Start it from the repo folder:
+
+```bash
+uv run dagster dev -f orchestration/definitions.py
+```
+
+Then open http://127.0.0.1:3000 in your browser.
+
+- Every day at 06:30 (Swedish time) Dagster loads the Swedavia data with dlt.
+- Every Monday it loads the Wikipedia data.
+- When the Swedavia load is done, a sensor starts dbt and all models are
+  built again.
 
 ## Dashboard
 
-Coming soon.
+The dashboard reads from `marts.mart_flight_delays` and logs in as
+`streamlit_user`. Make a file `.streamlit/secrets.toml` in the repo folder:
+
+```toml
+[connections.snowflake]
+account = "<account_identifier>"
+user = "streamlit_user"
+private_key_file = "/Users/<your_user>/.ssh/snowflake/streamlit_key.p8"
+role = "streamlit_reporter"
+warehouse = "flights_wh"
+database = "flights_db"
+schema = "marts"
+```
+
+This file is in `.gitignore`. Then start the dashboard:
+
+```bash
+uv run streamlit run dashboard/app.py
+```
+
+You can filter on airport, airline and date, and see the delays per airport,
+per day and per airline.
 
 ## Docker and Azure
 
-Coming soon.
+We have two containers, one for Dagster and one for the dashboard. Copy
+`.env.example` to `.env` and fill in the values (the comments in the file say
+how):
+
+```bash
+cp .env.example .env
+```
+
+Then build and start both containers:
+
+```bash
+docker compose up --build
+```
+
+- Dagster is on http://localhost:3000
+- The dashboard is on http://localhost:8501
+
+The keys are put in `.env` as text, not as files. When the dashboard container
+starts, it makes its own key file and `secrets.toml` from `.env`, so no secrets
+are copied into the image.
+
+Azure: coming soon.
 
 ## Things we decided
 
 - We use the 10 airports that Swedavia has in the API: ARN, BMA, GOT, MMX,
   LLA, UME, OSD, VBY, RNB and KRN.
-- What counts as a delay: not decided yet.
+- A flight is delayed if it is more than 15 minutes late. We only count
+  flights that have landed or departed.
+- Cancelled flights are counted on their own.
+- Flights with the status "Deleted" were removed from the schedule, so we
+  leave them out.
 
 ## Group
 
