@@ -133,7 +133,7 @@ st.caption(
     "since a few flights give misleading percentages."
 )
 airline_measure = st.radio(
-    "Show", MEASURE_OPTIONS, horizontal=True, key="airline_measure"
+    "Select to view", MEASURE_OPTIONS, horizontal=True, key="airline_measure"
 )
 
 # Completed flights, delayed flights and share per airline
