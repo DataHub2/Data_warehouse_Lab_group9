@@ -190,16 +190,49 @@ Coming soon.
 
 ## Docker and Azure
 
-Coming soon.
+Two containers, built from `dockerfile.dwh` (dlt, dbt and Dagster) and
+`dockerfile.dashboard` (Streamlit). Run both locally with:
+
+    docker compose up --build
+
+Dagster on port 3000, the dashboard on 8501.
+
+Nothing secret is in the images. Credentials arrive as environment
+variables and the dashboard's entrypoint writes `.streamlit/secrets.toml`
+at startup. `.env.example` lists every variable, including how to turn a
+.p8 key file into a one-line value.
+
+### Deployed on Azure
+
+Both containers run as Azure Container Apps,
+with images in an Azure Container Registry. Build and push in one step:
+
+    az acr build --registry flightsacrnasr --image flights-dwh:latest --file dockerfile.dwh .
+    az acr build --registry flightsacrnasr --image flights-dashboard:latest --file dockerfile.dashboard .
+
+The Dagster container runs with `--min-replicas 1` so the daemon stays
+alive and the schedules actually run as planned. URLs, found in private group chat.
+
+### Things that cost us time
+
+`az containerapp update --set-env-vars` registers variables on the app but
+does not restart the replica on an express environment, so the running
+container never sees them. `--revision-suffix` is not supported there
+either. Deleting and recreating the app is what works.
+
+The Dagster UI has no authentication, Dagster ships without any. 
+However, in production it would sit behind private ingress with an identity provider, 
+and only the dashboard would be public. For a short-lived course deployment 
+we accepted that and will delete the resource group shortly afterwards.
 
 ## Things we decided
 
 - We use the 10 airports that Swedavia has in the API: ARN, BMA, GOT, MMX,
   LLA, UME, OSD, VBY, RNB and KRN.
-- What counts as a delay: not decided yet.
+- What counts as a delay: 15-minutes.
 
 ## Group
 
 - Zakaria Abdullahi
 - Marcus Andersson
-- Nasser Wahi
+- Nasser Abdulwahab
