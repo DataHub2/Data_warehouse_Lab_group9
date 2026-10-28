@@ -295,24 +295,33 @@ The same two images also run in Azure:
 
 - The images are pushed to an Azure Container Registry. The image names in
   `docker-compose.yml` point to it.
-- Dagster runs as an Azure Container App. It is always on, so the schedules
-  and the sensor run without anyone's computer being on.
-- The dashboard runs as an Azure Web App with a public URL.
+- Dagster runs as an Azure Container App with `--min-replicas 1`, so the
+  daemon never sleeps and the schedules and the sensor run without anyone's
+  computer being on. The URLs are in our group chat, not here.
+- The dashboard runs as an Azure Container App with a public URL.
 - The keys are added as environment variables in Azure, with the same names
   as in `.env`. They are never in the image or in git.
 
-## Things we decided
+Build and push both images in one step. This builds on Azure's side,
+nothing large is uploaded from your own machine:
 
-- We use the 10 airports that Swedavia has in the API: ARN, BMA, GOT, MMX,
-  LLA, UME, OSD, VBY, RNB and KRN.
-- A flight is delayed if it is more than 15 minutes late. We only count
-  flights that have landed or departed.
-- Cancelled flights are counted on their own.
-- Flights with the status "Deleted" were removed from the schedule, so we
-  leave them out.
+    az acr build --registry flightsacrnasr --image flights-dwh:latest --file dockerfile.dwh .
+    az acr build --registry flightsacrnasr --image flights-dashboard:latest --file dockerfile.dashboard .
+
+### Things that cost us time
+
+`az containerapp update --set-env-vars` registers variables on the app but
+does not restart the replica on an express environment, so the running
+container never sees them. `--revision-suffix` is not supported there either. 
+Deleting and recreating the app is what works.
+
+The Dagster UI has no authentication. Dagster ships without any. 
+In production it would sit behind private ingress with an identity provider,
+and only the dashboard would be public. For a short-lived course deployment
+we accepted that and will delete the resource group shortly afterwards.
 
 ## Group
 
 - Zakaria Abdullahi
 - Marcus Andersson
-- Nasser Wahi
+- Nasser Abdulwahab
